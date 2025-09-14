@@ -6,7 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     tenant_id: { type: DataTypes.INTEGER, allowNull: false },
     customer_id: { type: DataTypes.INTEGER, allowNull: false },
-    cart_items: DataTypes.JSON, 
+    // cart_items: DataTypes.JSON, 
+    cart_items: DataTypes.TEXT, 
     abandoned_at: DataTypes.DATE
   })
 
