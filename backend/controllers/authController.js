@@ -1,55 +1,62 @@
-
-
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const { Tenant } = require("../models")
 
-// register  new tenant
+
 async function register(req, res) {
   try {
     const { name, store_url, email, password } = req.body
 
-    if (!name || !email || !password) {
+
+    if (!name || !store_url || !email || !password) {
       return res.status(400).json({ msg: "missing fields" })
     }
 
+    
     const hashedPass = await bcrypt.hash(password, 10)
 
-    // saving that tenant
+   
     const tenant = await Tenant.create({
       name,
-      store_url: store_url.toLowerCase(),
+      store_url: store_url.toLowerCase(), // normalizeing url
       email,
-      api_key: hashedPass // for now storing password in api_key field
+      api_key: hashedPass, // useing api_key column to store password hash
     })
 
-    res.json({ msg: "tenant registered", tenant })
+    res.json({ msg: "tenant registered successfully", tenant })
   } catch (err) {
-    console.log(err)
+    console.error("Register Error:", err)
     res.status(500).json({ msg: "server error" })
   }
 }
 
-// login tenant
+
 async function login(req, res) {
   try {
     const { email, password } = req.body
 
+    
     const tenant = await Tenant.findOne({ where: { email } })
-    if (!tenant) return res.status(404).json({ msg: "not found" })
+    if (!tenant) {
+      return res.status(404).json({ msg: "tenant not found" })
+    }
 
+    
     const valid = await bcrypt.compare(password, tenant.api_key)
-    if (!valid) return res.status(400).json({ msg: "wrong password" })
+    if (!valid) {
+      return res.status(400).json({ msg: "wrong password" })
+    }
 
+    //  Create JWT token
     const token = jwt.sign(
-      { tenant_id: tenant.id },
-      process.env.JWT_SECRET || "secret",
-      { expiresIn: "1d" }
+      { tenant_id: tenant.id }, // payload
+      process.env.JWT_SECRET || "secret", // secret key
+      { expiresIn: "1d" } // valid for 1 day
     )
 
-    res.json({ token })
+    res.json({ msg: "login successful", token })
   } catch (err) {
-    console.log(err)
+    console.error("Login Error:", err)
     res.status(500).json({ msg: "server error" })
   }
 }
